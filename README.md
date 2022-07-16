@@ -2,6 +2,8 @@
 
 An Apple HomeKit accessory for the [Adafruit SCD30 CO2 sensor](https://www.adafruit.com/product/4867).
 
+![The accessory added to iOS](homekit-scd30.jpg)
+
 ## Software
 
 * Build: `go build homekit-scd30.go`
