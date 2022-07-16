@@ -1,25 +1,37 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
+
+	"github.com/brutella/hap"
+	"github.com/brutella/hap/accessory"
+	"github.com/brutella/hap/characteristic"
+	"github.com/brutella/hap/service"
 
 	"github.com/pvainio/scd30"
 	"periph.io/x/conn/v3/i2c/i2creg"
 	"periph.io/x/host/v3"
 )
 
-var developmentMode bool
+var acc *accessory.Thermometer
+var co2 *service.CarbonDioxideSensor
+var co2Level *characteristic.CarbonDioxideLevel
+var humidity *service.HumiditySensor
 var timeBetweenReadings int
 
 func init() {
-	flag.BoolVar(&developmentMode, "dev", false, "development mode returns a random reading")
 	flag.IntVar(&timeBetweenReadings, "timeBetweenReadings", 5, "The time in seconds between CO2 readings")
 	flag.Parse()
 }
 
-func main() {
+func readSensor() {
+	// Setup the SCD30 CO2 sensor
 	if _, err := host.Init(); err != nil {
 		log.Fatal(err)
 	}
@@ -49,9 +61,69 @@ func main() {
 				log.Fatalf("error %v", err)
 			}
 
+			acc.TempSensor.CurrentTemperature.SetValue(float64(m.Temperature))
+			humidity.CurrentRelativeHumidity.SetValue(float64(m.Humidity))
+			co2Level.SetValue(float64(m.CO2))
+			if m.CO2 > 850 {
+				co2.CarbonDioxideDetected.SetValue(1)
+			} else {
+				co2.CarbonDioxideDetected.SetValue(0)
+			}
 			log.Printf("%f ppm, %f°C, %f%%", m.CO2, m.Temperature, m.Humidity)
 		} else {
 			log.Print("Failed to get a measurement...")
 		}
 	}
+}
+
+func main() {
+	// Setup the HomeKit accessory
+	acc = accessory.NewTemperatureSensor(accessory.Info{
+		Name:             "SCD-30",
+		SerialNumber:     "ADAFRUIT-4867-SCD-30",
+		Manufacturer:     "Adafruit",
+		Model:            "SCD-30",
+		Firmware: 		  "1.0.0",
+	})
+
+	// Add the humidity service
+	humidity = service.NewHumiditySensor()
+	acc.AddS(humidity.S)
+
+	// Add the CO2 service
+	co2 = service.NewCarbonDioxideSensor()
+	co2Level = characteristic.NewCarbonDioxideLevel()
+	co2.AddC(co2Level.C)
+	acc.AddS(co2.S)
+
+	// Store the data in the "./db" directory.
+	fs := hap.NewFsStore("./db")
+
+	// Create the hap server.
+	server, err := hap.NewServer(fs, acc.A)
+	if err != nil {
+		// stop if an error happens
+		log.Panic(err)
+	}
+
+	// Setup a listener for interrupts and SIGTERM signals
+	// to stop the server.
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		<-c
+		// Stop delivering signals.
+		signal.Stop(c)
+		// Cancel the context to stop the server.
+		cancel()
+	}()
+
+	// Read the CO2 sensor
+	go readSensor()
+
+	// Run the server.
+	server.ListenAndServe(ctx)
 }
