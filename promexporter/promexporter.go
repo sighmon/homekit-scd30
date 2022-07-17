@@ -16,7 +16,7 @@ var (
 	temperatureGauge = promauto.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "temperature",
-			Help: "Temperature measured (*C)",
+			Help: "Temperature measured (°C)",
 		},
 	)
 
