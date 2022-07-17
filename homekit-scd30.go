@@ -14,6 +14,8 @@ import (
 	"github.com/brutella/hap/characteristic"
 	"github.com/brutella/hap/service"
 
+	"github.com/sighmon/homekit-scd30/promexporter"
+
 	"github.com/pvainio/scd30"
 	"periph.io/x/conn/v3/i2c/i2creg"
 	"periph.io/x/host/v3"
@@ -23,9 +25,12 @@ var acc *accessory.Thermometer
 var co2 *service.CarbonDioxideSensor
 var co2Level *characteristic.CarbonDioxideLevel
 var humidity *service.HumiditySensor
+var prometheusExporter bool
+var scd30PrometheusExporter *promexporter.Exporter
 var timeBetweenReadings int
 
 func init() {
+	flag.BoolVar(&prometheusExporter, "prometheusExporter", false, "Start a Prometheus exporter on port 1006")
 	flag.IntVar(&timeBetweenReadings, "timeBetweenReadings", 5, "The time in seconds between CO2 readings")
 	flag.Parse()
 }
@@ -69,11 +74,17 @@ func readSensor() {
 			} else {
 				co2.CarbonDioxideDetected.SetValue(0)
 			}
+			scd30PrometheusExporter.UpdateReadings(m.Temperature, m.Humidity, m.CO2)
 			log.Printf("%f ppm, %f°C, %f%%", m.CO2, m.Temperature, m.Humidity)
 		} else {
 			log.Print("Failed to get a measurement...")
 		}
 	}
+}
+
+func startPrometheus() {
+	scd30PrometheusExporter = promexporter.New(1006)
+	scd30PrometheusExporter.Start()
 }
 
 func main() {
@@ -123,6 +134,11 @@ func main() {
 
 	// Read the CO2 sensor
 	go readSensor()
+
+	// Start the Prometheus exporter
+	if prometheusExporter {
+		go startPrometheus()
+	}
 
 	// Run the server.
 	server.ListenAndServe(ctx)
