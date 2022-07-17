@@ -30,7 +30,7 @@ var scd30PrometheusExporter *promexporter.Exporter
 var timeBetweenReadings int
 
 func init() {
-	flag.BoolVar(&prometheusExporter, "prometheusExporter", false, "Start a Prometheus exporter on port 1006")
+	flag.BoolVar(&prometheusExporter, "prometheusExporter", false, "Start a Prometheus exporter on port 8000")
 	flag.IntVar(&timeBetweenReadings, "timeBetweenReadings", 5, "The time in seconds between CO2 readings")
 	flag.Parse()
 }
@@ -83,7 +83,7 @@ func readSensor() {
 }
 
 func startPrometheus() {
-	scd30PrometheusExporter = promexporter.New("1006")
+	scd30PrometheusExporter = promexporter.New(":8000")
 	scd30PrometheusExporter.Start()
 }
 

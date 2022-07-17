@@ -27,8 +27,16 @@ Adafruit have a great tutorial: [Learn SCD-30](https://learn.adafruit.com/adafru
 * Run: `go run homekit-scd30.go`
 * In iOS Home app, click Add Accessory -> "More options..." and you should see "SCD-30"
 
+### Prometheus exporter
+
+To export the `co2`, `temperature`, and `humidity` for [Prometheus](https://prometheus.io) use the optional flag `-prometheusExporter`.
+
+* Run: `go run homekit-scd30.go -prometheusExporter`
+
+You'll then see the data on port `8000`: http://localhost:8000/metrics
+
 ## TODO
 
 - [x] Read the sensor
 - [x] Add HomeKit CO2, temperature, humidity accessory
-- [ ] Add Prometheus exporter
+- [x] Add Prometheus exporter
