@@ -18,3 +18,5 @@ homekit-scd30
 # Sublime Text
 *.sublime*
 
+# HomeKit database
+db
