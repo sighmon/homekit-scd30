@@ -74,7 +74,7 @@ func readSensor() {
 			} else {
 				co2.CarbonDioxideDetected.SetValue(0)
 			}
-			scd30PrometheusExporter.UpdateReadings(m.Temperature, m.Humidity, m.CO2)
+			scd30PrometheusExporter.UpdateReadings(float64(m.Temperature), float64(m.Humidity), float64(m.CO2))
 			log.Printf("%f ppm, %f°C, %f%%", m.CO2, m.Temperature, m.Humidity)
 		} else {
 			log.Print("Failed to get a measurement...")
@@ -83,7 +83,7 @@ func readSensor() {
 }
 
 func startPrometheus() {
-	scd30PrometheusExporter = promexporter.New(1006)
+	scd30PrometheusExporter = promexporter.New("1006")
 	scd30PrometheusExporter.Start()
 }
 
