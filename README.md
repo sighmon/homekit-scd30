@@ -14,7 +14,7 @@ An Apple HomeKit accessory for the [Adafruit SCD-30 CO2 sensor](https://www.adaf
 Adafruit have a great tutorial: [Learn SCD-30](https://learn.adafruit.com/adafruit-scd30/python-circuitpython)
 
 | Raspberry Pi pin | SCD-30 sensor pin | Wire colour |
-| - | - |
+| - | - | - |
 | `1` 3.3V | `VIN` Voltage in | Red |
 | `3` GPIO 02 I2C SDA | `SDA` I2C SDA | Blue |
 | `5` GPIO 03 I2C SCL | `SCL` I2C SCL | Yellow |
@@ -54,3 +54,4 @@ humidity 66.6168212890625
 - [x] Read the sensor
 - [x] Add HomeKit CO2, temperature, humidity accessory
 - [x] Add Prometheus exporter
+- [ ] Add Pull Request for sending a [forced calibration reference](https://learn.adafruit.com/adafruit-scd30/field-calibration), and maybe [altitude calibration](https://github.com/adafruit/Adafruit_CircuitPython_SCD30/blob/5566cb8133541c1c211d3c0c0430524d2890d71a/adafruit_scd30.py#L172)
